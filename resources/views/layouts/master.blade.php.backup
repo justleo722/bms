@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+@php
+    $activeNav = $activeNav ?? 'dashboard';
+
+    $barSettings = \App\Settings\BarSettings::all();
+    $currency = \App\Settings\BarSettings::currency();
+    $currencySymbol = $currency['symbol'];
+    $currencyCode = $currency['code'];
+    $currencyDecimals = $currency['decimals'];
+    $barName = $barSettings['name'];
+    $barLogo = \App\Settings\BarSettings::logoUrl();
+
+    // The signed in administrator — everything in the header and the profile
+    // modal is driven by this record.
+    $authUser = auth()->user();
+    $adminName = $authUser?->name ?: 'Administrator';
+    $adminEmail = $authUser?->email ?: '';
+    $adminPhone = $authUser?->phone ?: '';
+    $adminBusiness = $authUser?->business_name ?: $barName;
+    $adminInitials = $authUser?->initials() ?: 'AD';
+    $adminRole = $authUser?->isAdministrator() ? 'Administrator' : ucfirst((string) $authUser?->role);
+    $adminJoined = $authUser?->created_at ? $authUser->created_at->format('M d, Y') : '';
+    $adminPin = $authUser?->pin ?: '—';
+
+    $endpoints = [
+        'profile' => route('profile.update'),
+        'pin' => route('profile.pin'),
+    ];
+@endphp
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Dashboard') — BMS</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script>
+        // Global money helper — the active currency comes from Settings > Receipt.
+        window.BmsMoney = {
+            symbol: @json($currencySymbol),
+            code: @json($currencyCode),
+            decimals: {{ (int) $currencyDecimals }},
+            bar: {
+                name: @json($barName),
+                logo: @json($barLogo),
+                address: @json($barSettings['address']),
+                phone: @json($barSettings['phone']),
+                receipt_header: @json($barSettings['receipt_header']),
+                receipt_footer: @json($barSettings['receipt_footer']),
+            },
+            // Format an amount with the active currency symbol.
+            fmt: function (v) {
+                var n = Number(v || 0);
+                var fixed = n.toFixed(this.decimals);
+                var parts = fixed.split('.');
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return this.symbol + ' ' + parts.join('.');
+            },
+        };
+    </script>
+
+    {{-- Shared datasets, the global search index and the staff helpers. --}}
+    @include('partials.app-data')
+
+    @stack('head')
+</head>
+<body class="h-full bg-gray-50 font-sans antialiased">
+    @php
+        $navItems = [
+            ['key' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'o-squares-2x2'],
+            ['key' => 'pos',       'label' => 'POS',       'icon' => 'o-credit-card'],
+            ['key' => 'sales',     'label' => 'Sales',     'icon' => 'o-banknotes'],
+            ['key' => 'kitchen',   'label' => 'Kitchen',   'icon' => 'o-fire'],
+            ['key' => 'inventory', 'label' => 'Inventory', 'icon' => 'o-cube'],
+            ['key' => 'expenses',  'label' => 'Profit & Expenses',  'icon' => 'o-currency-dollar'],
+            ['key' => 'reports',   'label' => 'Reports',   'icon' => 'o-chart-bar'],
+            ['key' => 'staff',     'label' => 'Staff',     'icon' => 'o-user-group'],
+            ['key' => 'settings',  'label' => 'Settings',  'icon' => 'o-cog-6-tooth'],
+        ];
+    @endphp
+
+    <div x-data="{
+        userMenuOpen: false,
+        mobileSearchOpen: false,
+        showProfileModal: false,
+        activeNav: '{{ $activeNav }}',
+        setActive(key) { this.activeNav = key },
+
+        // ===== Global search =====
+        searchQuery: '',
+        searchOpen: false,
+        searchResults: [],
+        searchJumps: [],
+        searchIndex: 0,
+        runSearch() {
+            const q = (this.searchQuery || '').trim();
+            this.searchIndex = 0;
+            if (!q) {
+                this.searchResults = [];
+                this.searchJumps = (window.BmsSearch && window.BmsSearch.jumps) ? window.BmsSearch.jumps() : [];
+                return;
+            }
+            this.searchJumps = [];
+            this.searchResults = (window.BmsSearch && window.BmsSearch.query) ? window.BmsSearch.query(q) : [];
+        },
+        moveSelection(delta) {
+            const total = this.searchResults.length;
+            if (!total) { return; }
+            this.searchIndex = (this.searchIndex + delta + total) % total;
+        },
+        openResult(result) {
+            if (!result) { return; }
+            window.location.href = result.url;
+        },
+        openFirstResult() {
+            if (this.searchResults.length) { this.openResult(this.searchResults[0]); }
+        },
+        clearSearch() {
+            this.searchQuery = '';
+            this.searchResults = [];
+            this.searchOpen = false;
+            this.mobileSearchOpen = false;
+        },
+
+        // ===== Administrator profile =====
+        csrf: document.querySelector('meta[name=\"csrf-token\"]') ? document.querySelector('meta[name=\"csrf-token\"]').content : '',
+        endpoints: @json($endpoints),
+        profile: {
+            name: @json($adminName),
+            email: @json($adminEmail),
+            phone: @json($adminPhone),
+            businessName: @json($adminBusiness),
+            initials: @json($adminInitials),
+            role: @json($adminRole),
+            joinDate: @json($adminJoined),
+            pin: @json($adminPin),
+        },
+        editProfile: {
+            name: @json($adminName),
+            email: @json($adminEmail),
+            phone: @json($adminPhone),
+            businessName: @json($adminBusiness),
+            password: '',
+            passwordConfirmation: '',
+        },
+        savingProfile: false,
+        regeneratingPin: false,
+        profileError: '',
+        profileErrors: {},
+        profileSaved: false,
+        openProfile() {
+            this.editProfile = {
+                name: this.profile.name,
+                email: this.profile.email,
+                phone: this.profile.phone,
+                businessName: this.profile.businessName,
+                password: '',
+                passwordConfirmation: '',
+            };
+            this.profileError = '';
+            this.profileErrors = {};
+            this.profileSaved = false;
+            this.showProfileModal = true;
+            this.userMenuOpen = false;
+        },
+        async saveProfile() {
+            this.profileError = '';
+            this.profileErrors = {};
+            this.profileSaved = false;
+
+            if (this.editProfile.password && this.editProfile.password !== this.editProfile.passwordConfirmation) {
+                this.profileError = 'The two passwords do not match.';
+                return;
+            }
+
+            this.savingProfile = true;
+
+            const payload = {
+                name: this.editProfile.name,
+                email: this.editProfile.email,
+                phone: this.editProfile.phone,
+                business_name: this.editProfile.businessName,
+            };
+
+            if (this.editProfile.password) {
+                payload.password = this.editProfile.password;
+                payload.password_confirmation = this.editProfile.passwordConfirmation;
+            }
+
+            try {
+                const res = await fetch(this.endpoints.profile, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': this.csrf,
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    this.profileErrors = data.errors || {};
+                    this.profileError = data.message || 'Your profile could not be saved.';
+                    return;
+                }
+
+                this.profile = Object.assign({}, this.profile, data.user || {});
+                this.editProfile.password = '';
+                this.editProfile.passwordConfirmation = '';
+                this.profileSaved = true;
+                this.profileError = '';
+            } catch (e) {
+                this.profileError = 'Network problem — your profile could not be saved.';
+            } finally {
+                this.savingProfile = false;
+            }
+        },
+        async regeneratePin() {
+            this.regeneratingPin = true;
+            this.profileError = '';
+            try {
+                const res = await fetch(this.endpoints.pin, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': this.csrf,
+                    },
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) {
+                    this.profileError = data.message || 'The sign-in code could not be changed.';
+                    return;
+                }
+                this.profile.pin = data.pin;
+                this.profileSaved = true;
+            } catch (e) {
+                this.profileError = 'Network problem — the sign-in code could not be changed.';
+            } finally {
+                this.regeneratingPin = false;
+            }
+        },
+    }"
+    class="min-h-full flex flex-col"
+    @keydown.escape.window="userMenuOpen = false; mobileSearchOpen = false; searchOpen = false; showProfileModal = false">
+
+        {{-- ===== TOP NAVIGATION ===== --}}
+        <header class="fixed inset-x-0 top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200">
+            <div class="flex items-center justify-between h-16 px-4 lg:px-6">
+
+                {{-- Logo --}}
+                <div class="flex items-center gap-2.5">
+                    @if ($barLogo)
+                        <img src="{{ $barLogo }}" alt="{{ $barName }}" class="w-8 h-8 rounded-lg object-cover shadow-sm shadow-blue-800/20">
+                    @else
+                        <span class="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm shadow-blue-800/20">
+                            <span class="text-white font-bold text-sm tracking-tight">B</span>
+                        </span>
+                    @endif
+                    <span class="text-base font-bold text-gray-900 tracking-tight hidden sm:block">BMS</span>
+                </div>
+
+                {{-- Search (desktop) --}}
+                <div class="hidden md:flex flex-1 max-w-md mx-6 lg:mx-10">
+                    <div class="relative w-full" @click.outside="searchOpen = false">
+                        @heroicon('o-magnifying-glass', 'absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none')
+                        <input type="text"
+                               x-model="searchQuery"
+                               x-effect="runSearch()"
+                               @focus="searchOpen = true"
+                               @keydown.escape.stop="searchOpen = false"
+                               @keydown.arrow-down.prevent="moveSelection(1)"
+                               @keydown.arrow-up.prevent="moveSelection(-1)"
+                               @keydown.enter.prevent="openFirstResult()"
+                               placeholder="Search products, sales, staff..."
+                               autocomplete="off"
+                               class="w-full h-10 pl-10 pr-4 text-sm bg-gray-100 border border-transparent rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-200 placeholder:text-gray-400">
+
+                        {{-- Results --}}
+                        <div x-show="searchOpen"
+                             x-cloak
+                             class="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-h-[70vh] overflow-y-auto origin-top">
+                            @include('partials.search-results')
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Right actions --}}
+                <div class="flex items-center gap-1.5">
+
+                    {{-- Mobile search trigger --}}
+                    <button @click="mobileSearchOpen = !mobileSearchOpen; if (mobileSearchOpen) { searchOpen = true; }"
+                            class="md:hidden relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                            :class="{ 'text-blue-600 bg-blue-50': mobileSearchOpen }">
+                        @heroicon('o-magnifying-glass', 'w-5 h-5')
+                    </button>
+
+                    {{-- Administrator block --}}
+                    <div class="relative"
+                         @keydown.escape.window="userMenuOpen = false"
+                         x-data>
+                        <button @click="userMenuOpen = !userMenuOpen"
+                                class="flex items-center gap-2 p-1.5 pr-2.5 hover:bg-gray-100 rounded-xl transition-colors"
+                                :class="{ 'bg-gray-100': userMenuOpen }">
+                            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm shadow-blue-200">
+                                <span class="text-white text-sm font-semibold">{{ $adminInitials }}</span>
+                            </div>
+                            <div class="hidden lg:block text-left">
+                                <p class="text-sm font-medium text-gray-900 leading-tight">{{ $adminName }}</p>
+                                <p class="text-[11px] text-gray-500 leading-tight">{{ $adminRole }}</p>
+                            </div>
+                            @heroicon('o-chevron-down', 'hidden lg:block w-4 h-4 text-gray-400 transition-transform duration-200')
+                        </button>
+
+                        <div x-show="userMenuOpen"
+                             x-cloak
+                             @click.away="userMenuOpen = false"
+                             class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden origin-top-right">
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ $adminName }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ $adminEmail }}</p>
+                            </div>
+                            <div class="py-1">
+                                <button @click="openProfile()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full text-left">
+                                    @heroicon('o-user-circle', 'w-4 h-4 text-gray-400')
+                                    Profile
+                                </button>
+                                <a href="{{ route('settings') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    @heroicon('o-cog-6-tooth', 'w-4 h-4 text-gray-400')
+                                    Settings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Sign out — always visible in the top right corner --}}
+                    <form method="POST" action="{{ route('logout') }}" class="ml-0.5">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 h-10 px-3 sm:px-4 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 border border-red-100 hover:border-red-200 transition-colors shadow-sm shadow-red-100/50"
+                                title="Sign out">
+                            @heroicon('o-arrow-right-start-on-rectangle', 'w-4 h-4 shrink-0')
+                            <span class="hidden sm:inline">Sign out</span>
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+            {{-- Mobile search bar --}}
+            <div x-show="mobileSearchOpen"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="md:hidden px-4 pb-3">
+                <div class="relative" @click.outside="mobileSearchOpen = false">
+                    @heroicon('o-magnifying-glass', 'absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none')
+                    <input type="text"
+                           x-model="searchQuery"
+                           x-effect="runSearch()"
+                           @focus="searchOpen = true"
+                           placeholder="Search products, sales, staff..."
+                           autocomplete="off"
+                           class="w-full h-10 pl-10 pr-4 text-sm bg-gray-100 border border-transparent rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-200 placeholder:text-gray-400">
+                    <div x-show="searchOpen"
+                         x-cloak
+                         class="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-h-[60vh] overflow-y-auto origin-top">
+                        @include('partials.search-results')
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {{-- ===== MAIN CONTENT ===== --}}
+        <main class="flex-1 pt-16 pb-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                @yield('content')
+            </div>
+        </main>
+
+        {{-- ===== FOOTER ===== --}}
+        <footer class="border-t border-gray-200 bg-white py-3 px-6 text-center pb-20">
+        </footer>
+
+        {{-- ===== BOTTOM NAVIGATION (All screen sizes) ===== --}}
+        <nav class="fixed inset-x-0 bottom-0 z-40 bg-white border-t border-gray-200 safe-bottom">
+            <div class="flex items-stretch overflow-x-auto no-scrollbar">
+                @foreach ($navItems as $item)
+                    @php
+                        $isActive = $activeNav === $item['key'];
+                    @endphp
+                    <a href="{{ $item['key'] === 'dashboard' ? '/' : '/' . $item['key'] }}"
+                       class="relative flex flex-col items-center justify-center flex-shrink-0 flex-1 min-w-[4.5rem] h-[68px] px-1.5 transition-all duration-150 group"
+                       :class="activeNav === '{{ $item['key'] }}' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
+                        <span class="absolute inset-x-2 top-0 h-0.5 rounded-full transition-opacity duration-150"
+                              :class="activeNav === '{{ $item['key'] }}' ? 'bg-blue-600 opacity-100' : 'bg-transparent opacity-0'"></span>
+                        <div class="relative mb-0.5"
+                             :class="activeNav === '{{ $item['key'] }}' ? 'scale-110' : ''"
+                             style="transition: transform 0.15s ease">
+                            @heroicon($item['icon'], 'w-[22px] h-[22px]')
+                        </div>
+                        <span class="text-[10px] leading-tight font-medium whitespace-nowrap"
+                              :class="activeNav === '{{ $item['key'] }}' ? 'font-semibold' : ''">
+                            {{ $item['label'] }}
+                        </span>
+                    </a>
+                @endforeach
+            </div>
+        </nav>
+    </div>
+
+    {{-- Profile Modal --}}
+    <template x-teleport="body">
+        <div x-show="showProfileModal"
+             x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             @click.away="showProfileModal = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showProfileModal = false"></div>
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 max-h-[90vh] flex flex-col"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+                    <h3 class="text-lg font-bold text-gray-900">My Profile</h3>
+                    <button @click="showProfileModal = false" class="p-1 text-gray-400 hover:text-gray-600">@heroicon('o-x-mark', 'w-5 h-5')</button>
+                </div>
+
+                <div class="px-6 py-5 overflow-y-auto">
+                    {{-- Profile Header --}}
+                    <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 flex-shrink-0">
+                            <span class="text-white text-2xl font-bold" x-text="profile.initials"></span>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-lg font-bold text-gray-900 truncate" x-text="profile.name"></h4>
+                            <p class="text-sm text-gray-500" x-text="profile.role"></p>
+                            <p class="text-xs text-gray-400 mt-0.5">Member since <span x-text="profile.joinDate"></span></p>
+                        </div>
+                    </div>
+
+                    {{-- Messages --}}
+                    <div x-show="profileError" x-cloak class="mb-4 px-3.5 py-2.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700" x-text="profileError"></div>
+                    <div x-show="profileSaved" x-cloak class="mb-4 px-3.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-sm text-emerald-700">
+                        Your details have been saved.
+                    </div>
+
+                    {{-- Profile Info --}}
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                            <input type="text" x-model="editProfile.name"
+                                   class="w-full h-10 px-4 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            <p x-show="profileErrors.name" x-cloak class="text-red-500 text-xs mt-1" x-text="profileErrors.name ? profileErrors.name[0] : ''"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                            <input type="email" x-model="editProfile.email"
+                                   class="w-full h-10 px-4 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            <p x-show="profileErrors.email" x-cloak class="text-red-500 text-xs mt-1" x-text="profileErrors.email ? profileErrors.email[0] : ''"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+                            <input type="tel" x-model="editProfile.phone"
+                                   class="w-full h-10 px-4 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            <p x-show="profileErrors.phone" x-cloak class="text-red-500 text-xs mt-1" x-text="profileErrors.phone ? profileErrors.phone[0] : ''"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Business Name</label>
+                            <input type="text" x-model="editProfile.businessName"
+                                   class="w-full h-10 px-4 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            <p x-show="profileErrors.business_name" x-cloak class="text-red-500 text-xs mt-1" x-text="profileErrors.business_name ? profileErrors.business_name[0] : ''"></p>
+                        </div>
+
+                        <div class="pt-2 border-t border-gray-100">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">New Password <span class="text-gray-400 font-normal">(optional)</span></label>
+                            <input type="password" x-model="editProfile.password" placeholder="Leave blank to keep current"
+                                   class="w-full h-10 px-4 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            <p x-show="profileErrors.password" x-cloak class="text-red-500 text-xs mt-1" x-text="profileErrors.password ? profileErrors.password[0] : ''"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
+                            <input type="password" x-model="editProfile.passwordConfirmation" placeholder="Re-enter new password"
+                                   class="w-full h-10 px-4 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                   :class="editProfile.passwordConfirmation && editProfile.password !== editProfile.passwordConfirmation ? 'border-red-400' : ''">
+                        </div>
+                    </div>
+
+                    {{-- Sign-in code --}}
+                    <div class="mt-6 pt-5 border-t border-gray-100">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">Your sign-in code</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Used on the sign-in screen to log in.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1.5 rounded-lg bg-gray-100 font-mono text-sm font-semibold tracking-widest text-gray-800" x-text="profile.pin"></span>
+                                <button @click="regeneratePin()" :disabled="regeneratingPin"
+                                        class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50">
+                                    <span x-text="regeneratingPin ? 'Working...' : 'Change'"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-2 flex-shrink-0">
+                    <button @click="showProfileModal = false" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-white transition-colors">Close</button>
+                    <button @click="saveProfile()" :disabled="savingProfile"
+                            class="flex-1 py-2.5 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200 disabled:opacity-60 flex items-center justify-center gap-2">
+                        <svg x-show="savingProfile" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span x-text="savingProfile ? 'Saving...' : 'Save Changes'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    @stack('scripts')
+</body>
+</html>

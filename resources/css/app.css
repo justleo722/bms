@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.gray.200') transparent;
+    }
+}
+
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Horizontal table/card scrollers: keep momentum on touch devices and
+       stop a sideways swipe from dragging the whole page. */
+    .scroll-x {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+}
+
+/* iOS Safari zooms the page when a focused field is smaller than 16px.
+   Applies to real iOS only so desktop styling stays untouched. */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 767px) {
+        input:not([type='checkbox']):not([type='radio']):not([type='range']),
+        select,
+        textarea {
+            font-size: 16px;
+        }
+    }
+}
+
+[x-cloak] {
+    display: none !important;
+}

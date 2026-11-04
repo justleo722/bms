@@ -1,0 +1,188 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Default currency
+    |--------------------------------------------------------------------------
+    | The currency a fresh installation starts with (ISO 4217 code).
+    */
+
+    'default' => 'TZS',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supported currencies
+    |--------------------------------------------------------------------------
+    | Grouped by region so the settings dropdown can be organised with
+    | <optgroup> sections. Every entry holds:
+    |   code     - ISO 4217 code (used as the stored value)
+    |   symbol   - short symbol shown next to amounts
+    |   name     - full currency name
+    |   decimals - minor unit digits used when formatting amounts
+    */
+
+    'groups' => [
+        'Africa' => [
+            ['code' => 'TZS', 'symbol' => 'TSh', 'name' => 'Tanzanian Shilling', 'decimals' => 0],
+            ['code' => 'KES', 'symbol' => 'KSh', 'name' => 'Kenyan Shilling', 'decimals' => 0],
+            ['code' => 'UGX', 'symbol' => 'USh', 'name' => 'Ugandan Shilling', 'decimals' => 0],
+            ['code' => 'ETB', 'symbol' => 'Br', 'name' => 'Ethiopian Birr', 'decimals' => 2],
+            ['code' => 'ZAR', 'symbol' => 'R', 'name' => 'South African Rand', 'decimals' => 2],
+            ['code' => 'NGN', 'symbol' => '₦', 'name' => 'Nigerian Naira', 'decimals' => 2],
+            ['code' => 'EGP', 'symbol' => 'E£', 'name' => 'Egyptian Pound', 'decimals' => 2],
+            ['code' => 'MAD', 'symbol' => 'DH', 'name' => 'Moroccan Dirham', 'decimals' => 2],
+            ['code' => 'DZD', 'symbol' => 'DA', 'name' => 'Algerian Dinar', 'decimals' => 2],
+            ['code' => 'TND', 'symbol' => 'DT', 'name' => 'Tunisian Dinar', 'decimals' => 3],
+            ['code' => 'LYD', 'symbol' => 'LD', 'name' => 'Libyan Dinar', 'decimals' => 3],
+            ['code' => 'SDG', 'symbol' => 'SDG', 'name' => 'Sudanese Pound', 'decimals' => 2],
+            ['code' => 'GHS', 'symbol' => '₵', 'name' => 'Ghanaian Cedi', 'decimals' => 2],
+            ['code' => 'ZMW', 'symbol' => 'ZK', 'name' => 'Zambian Kwacha', 'decimals' => 2],
+            ['code' => 'MWK', 'symbol' => 'MK', 'name' => 'Malawian Kwacha', 'decimals' => 2],
+            ['code' => 'BWP', 'symbol' => 'P', 'name' => 'Botswana Pula', 'decimals' => 2],
+            ['code' => 'NAD', 'symbol' => 'N$', 'name' => 'Namibian Dollar', 'decimals' => 2],
+            ['code' => 'MZN', 'symbol' => 'MT', 'name' => 'Mozambican Metical', 'decimals' => 2],
+            ['code' => 'AOA', 'symbol' => 'Kz', 'name' => 'Angolan Kwanza', 'decimals' => 2],
+            ['code' => 'XOF', 'symbol' => 'CFA', 'name' => 'West African CFA Franc', 'decimals' => 0],
+            ['code' => 'XAF', 'symbol' => 'FCFA', 'name' => 'Central African CFA Franc', 'decimals' => 0],
+            ['code' => 'RWF', 'symbol' => 'RF', 'name' => 'Rwandan Franc', 'decimals' => 0],
+            ['code' => 'BIF', 'symbol' => 'FBu', 'name' => 'Burundian Franc', 'decimals' => 0],
+            ['code' => 'DJF', 'symbol' => 'Fdj', 'name' => 'Djiboutian Franc', 'decimals' => 0],
+            ['code' => 'GMD', 'symbol' => 'G', 'name' => 'Gambian Dalasi', 'decimals' => 2],
+            ['code' => 'GNF', 'symbol' => 'FG', 'name' => 'Guinean Franc', 'decimals' => 0],
+            ['code' => 'KMF', 'symbol' => 'CF', 'name' => 'Comorian Franc', 'decimals' => 0],
+            ['code' => 'CVE', 'symbol' => '$', 'name' => 'Cape Verdean Escudo', 'decimals' => 2],
+            ['code' => 'STN', 'symbol' => 'Db', 'name' => 'Sao Tome & Principe Dobra', 'decimals' => 2],
+            ['code' => 'MUR', 'symbol' => 'Rs', 'name' => 'Mauritian Rupee', 'decimals' => 2],
+            ['code' => 'SCR', 'symbol' => 'Rs', 'name' => 'Seychellois Rupee', 'decimals' => 2],
+            ['code' => 'SOS', 'symbol' => 'Sh', 'name' => 'Somali Shilling', 'decimals' => 0],
+            ['code' => 'ERN', 'symbol' => 'Nfk', 'name' => 'Eritrean Nakfa', 'decimals' => 2],
+            ['code' => 'CDF', 'symbol' => 'FC', 'name' => 'Congolese Franc', 'decimals' => 2],
+            ['code' => 'SLE', 'symbol' => 'Le', 'name' => 'Sierra Leonean Leone', 'decimals' => 2],
+            ['code' => 'MRU', 'symbol' => 'UM', 'name' => 'Mauritanian Ouguiya', 'decimals' => 2],
+            ['code' => 'LSL', 'symbol' => 'L', 'name' => 'Lesotho Loti', 'decimals' => 2],
+            ['code' => 'SZL', 'symbol' => 'E', 'name' => 'Swazi Lilangeni', 'decimals' => 2],
+            ['code' => 'ZWL', 'symbol' => 'ZWL$', 'name' => 'Zimbabwean Dollar', 'decimals' => 2],
+        ],
+
+        'Americas' => [
+            ['code' => 'USD', 'symbol' => '$', 'name' => 'US Dollar', 'decimals' => 2],
+            ['code' => 'CAD', 'symbol' => 'C$', 'name' => 'Canadian Dollar', 'decimals' => 2],
+            ['code' => 'MXN', 'symbol' => 'MX$', 'name' => 'Mexican Peso', 'decimals' => 2],
+            ['code' => 'BRL', 'symbol' => 'R$', 'name' => 'Brazilian Real', 'decimals' => 2],
+            ['code' => 'ARS', 'symbol' => 'AR$', 'name' => 'Argentine Peso', 'decimals' => 2],
+            ['code' => 'CLP', 'symbol' => 'CLP$', 'name' => 'Chilean Peso', 'decimals' => 0],
+            ['code' => 'COP', 'symbol' => 'COL$', 'name' => 'Colombian Peso', 'decimals' => 2],
+            ['code' => 'PEN', 'symbol' => 'S/', 'name' => 'Peruvian Sol', 'decimals' => 2],
+            ['code' => 'UYU', 'symbol' => '$U', 'name' => 'Uruguayan Peso', 'decimals' => 2],
+            ['code' => 'VES', 'symbol' => 'Bs.', 'name' => 'Venezuelan Bolivar', 'decimals' => 2],
+            ['code' => 'CRC', 'symbol' => '₡', 'name' => 'Costa Rican Colon', 'decimals' => 2],
+            ['code' => 'PAB', 'symbol' => 'B/.', 'name' => 'Panamanian Balboa', 'decimals' => 2],
+            ['code' => 'DOP', 'symbol' => 'RD$', 'name' => 'Dominican Peso', 'decimals' => 2],
+            ['code' => 'GTQ', 'symbol' => 'Q', 'name' => 'Guatemalan Quetzal', 'decimals' => 2],
+            ['code' => 'HNL', 'symbol' => 'L', 'name' => 'Honduran Lempira', 'decimals' => 2],
+            ['code' => 'NIO', 'symbol' => 'C$', 'name' => 'Nicaraguan Cordoba', 'decimals' => 2],
+            ['code' => 'BOB', 'symbol' => 'Bs', 'name' => 'Bolivian Boliviano', 'decimals' => 2],
+            ['code' => 'PYG', 'symbol' => '₲', 'name' => 'Paraguayan Guarani', 'decimals' => 0],
+            ['code' => 'CUP', 'symbol' => '$', 'name' => 'Cuban Peso', 'decimals' => 2],
+            ['code' => 'JMD', 'symbol' => 'J$', 'name' => 'Jamaican Dollar', 'decimals' => 2],
+            ['code' => 'TTD', 'symbol' => 'TT$', 'name' => 'Trinidad & Tobago Dollar', 'decimals' => 2],
+            ['code' => 'BBD', 'symbol' => 'Bds$', 'name' => 'Barbadian Dollar', 'decimals' => 2],
+            ['code' => 'BSD', 'symbol' => 'B$', 'name' => 'Bahamian Dollar', 'decimals' => 2],
+            ['code' => 'BZD', 'symbol' => 'BZ$', 'name' => 'Belize Dollar', 'decimals' => 2],
+            ['code' => 'BMD', 'symbol' => 'BD$', 'name' => 'Bermudian Dollar', 'decimals' => 2],
+            ['code' => 'KYD', 'symbol' => 'CI$', 'name' => 'Cayman Islands Dollar', 'decimals' => 2],
+            ['code' => 'XCD', 'symbol' => 'EC$', 'name' => 'East Caribbean Dollar', 'decimals' => 2],
+            ['code' => 'AWG', 'symbol' => 'ƒ', 'name' => 'Aruban Florin', 'decimals' => 2],
+            ['code' => 'ANG', 'symbol' => 'ƒ', 'name' => 'Netherlands Antillean Guilder', 'decimals' => 2],
+            ['code' => 'SRD', 'symbol' => '$', 'name' => 'Surinamese Dollar', 'decimals' => 2],
+            ['code' => 'GYD', 'symbol' => 'G$', 'name' => 'Guyanese Dollar', 'decimals' => 2],
+            ['code' => 'BND', 'symbol' => 'B$', 'name' => 'Brunei Dollar', 'decimals' => 2],
+        ],
+
+        'Asia' => [
+            ['code' => 'CNY', 'symbol' => '¥', 'name' => 'Chinese Yuan (RMB)', 'decimals' => 2],
+            ['code' => 'JPY', 'symbol' => '¥', 'name' => 'Japanese Yen', 'decimals' => 0],
+            ['code' => 'KRW', 'symbol' => '₩', 'name' => 'South Korean Won', 'decimals' => 0],
+            ['code' => 'INR', 'symbol' => '₹', 'name' => 'Indian Rupee', 'decimals' => 2],
+            ['code' => 'PKR', 'symbol' => '₨', 'name' => 'Pakistani Rupee', 'decimals' => 2],
+            ['code' => 'BDT', 'symbol' => '৳', 'name' => 'Bangladeshi Taka', 'decimals' => 2],
+            ['code' => 'LKR', 'symbol' => 'Rs', 'name' => 'Sri Lankan Rupee', 'decimals' => 2],
+            ['code' => 'NPR', 'symbol' => 'Rs', 'name' => 'Nepalese Rupee', 'decimals' => 2],
+            ['code' => 'AFN', 'symbol' => '؋', 'name' => 'Afghan Afghani', 'decimals' => 2],
+            ['code' => 'MVR', 'symbol' => 'Rf', 'name' => 'Maldivian Rufiyaa', 'decimals' => 2],
+            ['code' => 'BTN', 'symbol' => 'Nu', 'name' => 'Bhutanese Ngultrum', 'decimals' => 2],
+            ['code' => 'IDR', 'symbol' => 'Rp', 'name' => 'Indonesian Rupiah', 'decimals' => 2],
+            ['code' => 'MYR', 'symbol' => 'RM', 'name' => 'Malaysian Ringgit', 'decimals' => 2],
+            ['code' => 'SGD', 'symbol' => 'S$', 'name' => 'Singapore Dollar', 'decimals' => 2],
+            ['code' => 'HKD', 'symbol' => 'HK$', 'name' => 'Hong Kong Dollar', 'decimals' => 2],
+            ['code' => 'THB', 'symbol' => '฿', 'name' => 'Thai Baht', 'decimals' => 2],
+            ['code' => 'VND', 'symbol' => '₫', 'name' => 'Vietnamese Dong', 'decimals' => 0],
+            ['code' => 'KHR', 'symbol' => '៛', 'name' => 'Cambodian Riel', 'decimals' => 2],
+            ['code' => 'LAK', 'symbol' => '₭', 'name' => 'Lao Kip', 'decimals' => 2],
+            ['code' => 'MMK', 'symbol' => 'K', 'name' => 'Myanmar Kyat', 'decimals' => 2],
+            ['code' => 'MNT', 'symbol' => '₮', 'name' => 'Mongolian Tugrik', 'decimals' => 2],
+            ['code' => 'PHP', 'symbol' => '₱', 'name' => 'Philippine Peso', 'decimals' => 2],
+            ['code' => 'MOP', 'symbol' => 'MOP$', 'name' => 'Macanese Pataca', 'decimals' => 2],
+            ['code' => 'KZT', 'symbol' => '₸', 'name' => 'Kazakhstani Tenge', 'decimals' => 2],
+            ['code' => 'UZS', 'symbol' => 'soʻm', 'name' => 'Uzbekistani Som', 'decimals' => 2],
+            ['code' => 'KGS', 'symbol' => 'с', 'name' => 'Kyrgystani Som', 'decimals' => 2],
+            ['code' => 'TJS', 'symbol' => 'Ѕ', 'name' => 'Tajikistani Somoni', 'decimals' => 2],
+            ['code' => 'TMT', 'symbol' => 'T', 'name' => 'Turkmenistani Manat', 'decimals' => 2],
+            ['code' => 'AZN', 'symbol' => '₼', 'name' => 'Azerbaijani Manat', 'decimals' => 2],
+            ['code' => 'GEL', 'symbol' => '₾', 'name' => 'Georgian Lari', 'decimals' => 2],
+            ['code' => 'AMD', 'symbol' => '֏', 'name' => 'Armenian Dram', 'decimals' => 2],
+        ],
+
+        'Europe' => [
+            ['code' => 'EUR', 'symbol' => '€', 'name' => 'Euro', 'decimals' => 2],
+            ['code' => 'GBP', 'symbol' => '£', 'name' => 'British Pound Sterling', 'decimals' => 2],
+            ['code' => 'CHF', 'symbol' => 'CHF', 'name' => 'Swiss Franc', 'decimals' => 2],
+            ['code' => 'SEK', 'symbol' => 'kr', 'name' => 'Swedish Krona', 'decimals' => 2],
+            ['code' => 'NOK', 'symbol' => 'kr', 'name' => 'Norwegian Krone', 'decimals' => 2],
+            ['code' => 'DKK', 'symbol' => 'kr', 'name' => 'Danish Krone', 'decimals' => 2],
+            ['code' => 'ISK', 'symbol' => 'kr', 'name' => 'Icelandic Krona', 'decimals' => 0],
+            ['code' => 'PLN', 'symbol' => 'zł', 'name' => 'Polish Zloty', 'decimals' => 2],
+            ['code' => 'CZK', 'symbol' => 'Kč', 'name' => 'Czech Koruna', 'decimals' => 2],
+            ['code' => 'HUF', 'symbol' => 'Ft', 'name' => 'Hungarian Forint', 'decimals' => 2],
+            ['code' => 'RON', 'symbol' => 'lei', 'name' => 'Romanian Leu', 'decimals' => 2],
+            ['code' => 'BGN', 'symbol' => 'лв', 'name' => 'Bulgarian Lev', 'decimals' => 2],
+            ['code' => 'HRK', 'symbol' => 'kn', 'name' => 'Croatian Kuna', 'decimals' => 2],
+            ['code' => 'RSD', 'symbol' => 'дин', 'name' => 'Serbian Dinar', 'decimals' => 2],
+            ['code' => 'BAM', 'symbol' => 'KM', 'name' => 'Bosnian Convertible Mark', 'decimals' => 2],
+            ['code' => 'MKD', 'symbol' => 'ден', 'name' => 'Macedonian Denar', 'decimals' => 2],
+            ['code' => 'ALL', 'symbol' => 'L', 'name' => 'Albanian Lek', 'decimals' => 2],
+            ['code' => 'RUB', 'symbol' => '₽', 'name' => 'Russian Ruble', 'decimals' => 2],
+            ['code' => 'UAH', 'symbol' => '₴', 'name' => 'Ukrainian Hryvnia', 'decimals' => 2],
+            ['code' => 'BYN', 'symbol' => 'Br', 'name' => 'Belarusian Ruble', 'decimals' => 2],
+            ['code' => 'MDL', 'symbol' => 'L', 'name' => 'Moldovan Leu', 'decimals' => 2],
+            ['code' => 'TRY', 'symbol' => '₺', 'name' => 'Turkish Lira', 'decimals' => 2],
+        ],
+
+        'Middle East' => [
+            ['code' => 'AED', 'symbol' => 'AED', 'name' => 'UAE Dirham', 'decimals' => 2],
+            ['code' => 'SAR', 'symbol' => 'SAR', 'name' => 'Saudi Riyal', 'decimals' => 2],
+            ['code' => 'QAR', 'symbol' => 'QR', 'name' => 'Qatari Riyal', 'decimals' => 2],
+            ['code' => 'KWD', 'symbol' => 'KD', 'name' => 'Kuwaiti Dinar', 'decimals' => 3],
+            ['code' => 'BHD', 'symbol' => 'BD', 'name' => 'Bahraini Dinar', 'decimals' => 3],
+            ['code' => 'OMR', 'symbol' => 'OMR', 'name' => 'Omani Rial', 'decimals' => 3],
+            ['code' => 'JOD', 'symbol' => 'JD', 'name' => 'Jordanian Dinar', 'decimals' => 3],
+            ['code' => 'ILS', 'symbol' => '₪', 'name' => 'Israeli New Shekel', 'decimals' => 2],
+            ['code' => 'LBP', 'symbol' => 'L.L.', 'name' => 'Lebanese Pound', 'decimals' => 2],
+            ['code' => 'SYP', 'symbol' => '£S', 'name' => 'Syrian Pound', 'decimals' => 2],
+            ['code' => 'YER', 'symbol' => '﷼', 'name' => 'Yemeni Rial', 'decimals' => 2],
+        ],
+
+        'Oceania' => [
+            ['code' => 'AUD', 'symbol' => 'A$', 'name' => 'Australian Dollar', 'decimals' => 2],
+            ['code' => 'NZD', 'symbol' => 'NZ$', 'name' => 'New Zealand Dollar', 'decimals' => 2],
+            ['code' => 'FJD', 'symbol' => 'FJ$', 'name' => 'Fijian Dollar', 'decimals' => 2],
+            ['code' => 'PGK', 'symbol' => 'K', 'name' => 'Papua New Guinean Kina', 'decimals' => 2],
+            ['code' => 'SBD', 'symbol' => 'SI$', 'name' => 'Solomon Islands Dollar', 'decimals' => 2],
+            ['code' => 'VUV', 'symbol' => 'VT', 'name' => 'Vanuatu Vatu', 'decimals' => 0],
+            ['code' => 'XPF', 'symbol' => '₣', 'name' => 'CFP Franc', 'decimals' => 0],
+            ['code' => 'WST', 'symbol' => 'WS$', 'name' => 'Samoan Tala', 'decimals' => 2],
+            ['code' => 'TOP', 'symbol' => 'T$', 'name' => 'Tongan Paanga', 'decimals' => 2],
+        ],
+    ],
+];
