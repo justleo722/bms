@@ -20,6 +20,12 @@ it('requires a signed-in user before inventory data can be changed', function ()
     $this->postJson('/settings/inventory/categories', ['name' => 'Blocked'])->assertUnauthorized();
 });
 
+it('uses a neutral placeholder on the add product form', function () {
+    $this->get('/inventory')->assertOk()
+        ->assertSee('placeholder="e.g. Cocacola"', false)
+        ->assertDontSee('e.g. Konyagi 350ml', false);
+});
+
 it('shows inventory controls only for their matching staff permissions', function () {
     $staff = User::factory()->create([
         'role' => 'cashier',

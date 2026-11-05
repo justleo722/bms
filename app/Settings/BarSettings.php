@@ -17,7 +17,7 @@ class BarSettings
     public const DEFAULTS = [
         'name' => 'The Barefoot Lounge',
         'phone' => '+255 123 456 789',
-        'address' => 'Kili Road, Moshi, Kilimanjaro, Tanzania',
+        'address' => '',
         'logo' => null,
         'receipt_header' => 'THE BAREFOOT LOUNGE',
         'receipt_footer' => 'Thank you for visiting!',

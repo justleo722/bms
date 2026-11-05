@@ -3,10 +3,12 @@
 use App\Mail\InitialRegistrationCodesMail;
 use App\Mail\NewRegistrationNotificationMail;
 use App\Mail\RegistrationWelcomeMail;
+use App\Models\PosTable;
 use App\Models\RegistrationEntryCode;
 use App\Models\User;
 use App\Settings\BarSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
@@ -63,6 +65,41 @@ it('consumes an entry code, replenishes the pool, and emails both parties', func
             && $mail->signInCode === $pin
             && $mail->hasTo($user->email);
     });
+});
+
+it('starts a new registration without inherited branding and with tables T1 to T10', function () {
+    $this->get('/register')->assertOk();
+    $entryCode = RegistrationEntryCode::whereNull('consumed_at')->firstOrFail();
+
+    // Simulate branding left behind by a previous registration.
+    $oldLogo = BarSettings::brandingDirectory().DIRECTORY_SEPARATOR.'old-logo.png';
+    File::put($oldLogo, 'old logo');
+    BarSettings::save([
+        'name' => 'Previous Bar',
+        'phone' => '000',
+        'address' => 'Previous Address',
+        'logo' => 'old-logo.png',
+    ]);
+
+    $this->postJson('/register', [
+        'entry_code' => $entryCode->code_encrypted,
+        'name' => 'New Owner',
+        'business_name' => 'Fresh Bar',
+        'phone' => '+255 700 000 000',
+        'email' => 'fresh@example.com',
+        'password' => 'secret-password',
+        'password_confirmation' => 'secret-password',
+    ])->assertOk();
+
+    expect(BarSettings::get('name'))->toBe('Fresh Bar')
+        ->and(BarSettings::get('phone'))->toBe('+255 700 000 000')
+        ->and(BarSettings::get('address'))->toBe('')
+        ->and(BarSettings::get('logo'))->toBeNull()
+        ->and(BarSettings::logoPath())->toBeNull()
+        ->and(File::exists($oldLogo))->toBeFalse()
+        ->and(PosTable::query()->orderBy('id')->pluck('name')->all())->toBe([
+            'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10',
+        ]);
 });
 
 it('rejects a consumed entry code without creating another account', function () {

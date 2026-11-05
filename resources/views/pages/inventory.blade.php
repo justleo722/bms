@@ -1220,7 +1220,7 @@ window.inventoryData = function (initialQuery) {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
-                            <input type="text" x-model="newProduct.name" @input="delete newProductErrors.name" placeholder="e.g. Konyagi 350ml" class="w-full h-10 px-4 text-sm border rounded-xl outline-none transition-all" :class="newProductErrors.name ? 'bg-red-50 border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'bg-gray-50 border-gray-300 focus:border-blue-500'">
+                            <input type="text" x-model="newProduct.name" @input="delete newProductErrors.name" placeholder="e.g. Cocacola" class="w-full h-10 px-4 text-sm border rounded-xl outline-none transition-all" :class="newProductErrors.name ? 'bg-red-50 border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'bg-gray-50 border-gray-300 focus:border-blue-500'">
                             <p x-show="newProductErrors.name" x-cloak class="mt-1 text-xs text-red-600" x-text="newProductErrors.name"></p>
                         </div>
                         <div>

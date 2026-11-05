@@ -741,11 +741,7 @@ window.kitchenData = function (initialQuery, scope) {
             lowStockThreshold: 20, expiryWarningDays: 3,
             defaultWasteReason: 'Preparation Loss', enableBatchTracking: true, enableFIFO: true,
         },
-        recentActivity: [
-            { id: 1, icon: 'o-check-circle', color: 'text-green-500', text: 'Chicken Burger recipe updated to v3', time: 'Yesterday' },
-            { id: 2, icon: 'o-exclamation-triangle', color: 'text-amber-500', text: 'Chicken Breast stock is low (32.5 kg)', time: '09:15' },
-            { id: 3, icon: 'o-cube', color: 'text-purple-500', text: 'New raw material: Black Pepper added', time: 'Yesterday' },
-        ],
+        recentActivity: @json($recentActivity),
         topUsedIngredients: @json($topUsedIngredients),
         get topUsedIngredientMax() {
             return Math.max.apply(null, this.topUsedIngredients.map(function (item) { return item.used; }).concat([1]));
@@ -1146,6 +1142,9 @@ window.kitchenData = function (initialQuery, scope) {
                             </div>
                         </div>
                     </template>
+                    <p x-show="!recentActivity.length" class="px-5 py-8 text-center text-sm text-gray-400">
+                        No kitchen activity yet.
+                    </p>
                 </div>
             </div>
 

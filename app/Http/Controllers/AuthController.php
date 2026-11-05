@@ -119,8 +119,6 @@ class AuthController extends Controller
         $registration = $entryCodes->consumeAndReplace(
             $data['entry_code'],
             function (string $_validatedCode) use ($data, $pin): User {
-                $firstUser = User::withTrashed()->count() === 0;
-
                 $user = User::create([
                     'name' => $data['name'],
                     'business_name' => $data['business_name'],
@@ -131,14 +129,16 @@ class AuthController extends Controller
                     'password' => $data['password'],
                 ]);
 
-                // The first administrator defines the bar shown across the system.
-                if ($firstUser) {
-                    BarSettings::save([
-                        'name' => $data['business_name'],
-                        'phone' => $data['phone'],
-                        'receipt_header' => $data['business_name'],
-                    ]);
-                }
+                // A newly registered business starts with its own profile and no
+                // inherited branding from a previous registration.
+                BarSettings::deleteLogo();
+                BarSettings::save([
+                    'name' => $data['business_name'],
+                    'phone' => $data['phone'],
+                    'address' => '',
+                    'receipt_header' => $data['business_name'],
+                    'logo' => null,
+                ]);
 
                 return $user;
             }

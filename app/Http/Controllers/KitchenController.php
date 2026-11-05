@@ -51,6 +51,7 @@ class KitchenController extends Controller
             'kitchenRecipes' => KitchenRecipe::query()->with(['ingredients.material'])->orderBy('name')->get()->map(fn ($recipe) => $this->serializeRecipe($recipe)),
             'kitchenFoodItems' => KitchenFoodItem::query()->with('recipes')->orderBy('name')->get()->map(fn ($item) => $this->serializeFoodItem($item)),
             'topUsedIngredients' => $topUsedIngredients,
+            'recentActivity' => $this->recentKitchenActivity(),
         ]);
     }
 
@@ -608,6 +609,45 @@ class KitchenController extends Controller
             'expiry_date' => $data['expiry_date'] ?? null,
             'available' => $data['available'],
         ];
+    }
+
+    /**
+     * Real stock activity for the Kitchen overview.
+     *
+     * @return array<int, array{id:int,color:string,text:string,time:string}>
+     */
+    private function recentKitchenActivity(): array
+    {
+        return KitchenRawMaterialMovement::query()
+            ->with('material')
+            ->latest('created_at')
+            ->latest('id')
+            ->limit(6)
+            ->get()
+            ->map(function (KitchenRawMaterialMovement $movement) {
+                $material = $movement->material?->name ?? 'Deleted material';
+                $unit = $movement->material?->unit ?: '';
+                $quantity = rtrim(rtrim(number_format(abs((float) $movement->quantity_delta), 4, '.', ''), '0'), '.');
+                $amount = trim($quantity.' '.$unit);
+
+                [$color, $text] = match ($movement->type) {
+                    'opening' => ['text-purple-500', "New raw material: {$material} added"],
+                    'restock' => ['text-green-500', "{$material} restocked (+{$amount})"],
+                    'adjustment' => ['text-amber-500', "{$material} adjusted: ".($movement->reason ?: 'manual adjustment')],
+                    'sale' => ['text-blue-500', "{$material} used for a sale"],
+                    'sale_return' => ['text-emerald-500', "{$material} returned to stock"],
+                    default => ['text-gray-400', "{$material} stock updated"],
+                };
+
+                return [
+                    'id' => $movement->id,
+                    'color' => $color,
+                    'text' => $text,
+                    'time' => $movement->created_at?->diffForHumans() ?? '',
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     private function serializeMaterial(KitchenRawMaterial $material): array

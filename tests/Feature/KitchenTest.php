@@ -69,6 +69,28 @@ it('shows Kitchen controls and modal templates only for their matching permissio
     }
 });
 
+it('shows real kitchen activity instead of demo activity', function () {
+    $this->get('/kitchen')->assertOk()
+        ->assertDontSee('Chicken Burger recipe updated to v3')
+        ->assertDontSee('Chicken Breast stock is low (32.5 kg)')
+        ->assertDontSee('New raw material: Black Pepper added')
+        ->assertSee('No kitchen activity yet.');
+
+    $category = KitchenRawMaterialCategory::query()->where('name', 'Dry Goods')->firstOrFail();
+
+    $this->postJson('/kitchen/raw-materials', [
+        'name' => 'Recent Activity Test',
+        'category_id' => $category->id,
+        'unit' => 'kg',
+        'quantity' => 5,
+        'alert_level' => 1,
+        'cost_per_unit' => 1000,
+    ])->assertCreated();
+
+    $this->get('/kitchen')->assertOk()
+        ->assertSee('New raw material: Recent Activity Test added');
+});
+
 it('creates and edits raw materials while requiring restock or adjustment to change quantity', function () {
     $category = KitchenRawMaterialCategory::query()->where('name', 'Meats & Poultry')->firstOrFail();
     $response = $this->postJson('/kitchen/raw-materials', [

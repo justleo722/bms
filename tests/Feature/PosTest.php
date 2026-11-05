@@ -17,6 +17,12 @@ beforeEach(function () {
     $this->actingAs(User::factory()->create());
 });
 
+it('starts with the demo tables T1 through T10', function () {
+    expect(PosTable::query()->orderBy('id')->pluck('name')->all())->toBe([
+        'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10',
+    ]);
+});
+
 it('uses database products, categories, counters, tables, and payment methods in the POS', function () {
     $category = InventoryCategory::query()->where('slug', 'spirits')->firstOrFail();
     $counter = InventoryCounter::query()->firstOrFail();
