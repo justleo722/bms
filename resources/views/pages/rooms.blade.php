@@ -226,6 +226,15 @@ window.roomsData = function (initialState, permissions, todayDate, roomTypes) {
             if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 1;
             return Math.max(1, Math.ceil((end - start) / 86400000));
         },
+        checkInNights() {
+            var start = new Date(this.checkInForm.checkInAt).getTime();
+            var end = new Date(this.checkInForm.expectedCheckoutAt).getTime();
+            if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
+            return Math.max(1, Math.ceil((end - start) / 86400000));
+        },
+        checkInEstimate() {
+            return Number(this.checkInForm.rate || 0) * this.checkInNights();
+        },
         stayCharges(room, endAt) {
             if (!room || !room.stay) return 0;
             var roomCharge = Number(room.stay.rate) * this.daysStayed(room, endAt);
@@ -863,6 +872,13 @@ window.roomsData = function (initialState, permissions, todayDate, roomTypes) {
                         <label class="text-xs font-semibold text-gray-600">Rate per night<input type="number" min="0" x-model.number="checkInForm.rate" class="mt-1.5 h-10 w-full rounded-lg border border-gray-200 px-3 text-sm font-normal"></label>
                         <label class="text-xs font-semibold text-gray-600">Deposit received<input type="number" min="0" x-model.number="checkInForm.deposit" class="mt-1.5 h-10 w-full rounded-lg border border-gray-200 px-3 text-sm font-normal"></label>
                     </div>
+                    <div class="flex items-center justify-between gap-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+                        <div>
+                            <p class="text-xs font-semibold text-blue-900">Estimated room amount</p>
+                            <p class="mt-0.5 text-xs text-blue-700"><span x-text="checkInNights()"></span> night(s) × rate per night</p>
+                        </div>
+                        <p class="text-base font-bold text-blue-900" x-text="formatMoney(checkInEstimate())"></p>
+                    </div>
                     <div class="flex gap-2 border-t border-gray-100 pt-4">
                         <button type="button" @click="showCheckInModal = false" class="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
                         <button type="submit" class="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Complete check-in</button>
@@ -1016,12 +1032,11 @@ window.roomsData = function (initialState, permissions, todayDate, roomTypes) {
                             <input x-model="roomForm.number" required maxlength="24" placeholder="e.g. 101" class="mt-1.5 h-10 w-full rounded-lg border border-gray-200 px-3 text-sm font-normal outline-none focus:border-blue-500">
                         </label>
                         <label class="text-xs font-semibold text-gray-600">Room type
-                            <input x-model="roomForm.type" list="room-type-options" required maxlength="60" placeholder="e.g. Deluxe" class="mt-1.5 h-10 w-full rounded-lg border border-gray-200 px-3 text-sm font-normal outline-none focus:border-blue-500">
-                            <datalist id="room-type-options">
+                            <select x-model="roomForm.type" required class="mt-1.5 h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-normal outline-none focus:border-blue-500">
                                 @foreach ($roomTypes as $type)
-                                    <option value="{{ $type }}"></option>
+                                    <option value="{{ $type }}">{{ $type }}</option>
                                 @endforeach
-                            </datalist>
+                            </select>
                         </label>
                         <label class="text-xs font-semibold text-gray-600">Floor
                             <input x-model="roomForm.floor" maxlength="60" placeholder="e.g. First floor" class="mt-1.5 h-10 w-full rounded-lg border border-gray-200 px-3 text-sm font-normal outline-none focus:border-blue-500">

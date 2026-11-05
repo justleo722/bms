@@ -51,7 +51,13 @@ it('adds, edits and deletes rooms in the database', function () {
         ->assertOk()
         ->assertSee('Add room')
         ->assertSee('Room details are saved to the database.')
-        ->assertSee('Edit room');
+        ->assertSee('Edit room')
+        ->assertSee('<select x-model="roomForm.type" required', false)
+        ->assertSee('<option value="Standard">Standard</option>', false)
+        ->assertSee('checkInNights()', false)
+        ->assertSee('checkInEstimate()', false)
+        ->assertSee('Estimated room amount')
+        ->assertDontSee('room-type-options');
 
     $this->deleteJson('/rooms/'.$room->id)->assertOk();
     expect(Room::query()->find($room->id))->toBeNull();
