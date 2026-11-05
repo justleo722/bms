@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\ProfileController;
@@ -34,9 +35,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/no-access', function () {
-        return view('pages.no-access', ['activeNav' => '']);
-    })->name('no-access');
+    Route::get('/no-access', [PageController::class, 'noAccess'])->name('no-access');
 
     Route::get('/pos', [PosController::class, 'index'])->middleware('staff.permission:pos')->name('pos');
     Route::get('/pos/stock-levels', [PosController::class, 'stockLevels'])->middleware('staff.permission:pos')->name('pos.stock-levels');
@@ -115,17 +114,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/export/excel', [ReportController::class, 'excel'])->middleware('staff.permission:reports,viewExport')->name('reports.excel');
     Route::get('/reports/export/pdf', [ReportController::class, 'printReport'])->middleware('staff.permission:reports,viewExport')->name('reports.pdf');
 
-    Route::get('/orders', function () {
-        return view('pages.orders', ['activeNav' => 'orders']);
-    })->name('orders');
+    Route::get('/orders', [PageController::class, 'orders'])->name('orders');
 
-    Route::get('/tables', function () {
-        return view('pages.tables', ['activeNav' => 'tables']);
-    })->name('tables');
+    Route::get('/tables', [PageController::class, 'tables'])->name('tables');
 
-    Route::get('/customers', function () {
-        return view('pages.customers', ['activeNav' => 'customers']);
-    })->name('customers');
+    Route::get('/customers', [PageController::class, 'customers'])->name('customers');
 
     Route::get('/staff', [StaffController::class, 'index'])->middleware('staff.permission:staff')->name('staff');
     Route::get('/staff/data', [StaffController::class, 'data'])->middleware('staff.permission:staff')->name('staff.data');
@@ -170,7 +163,5 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/pin', [ProfileController::class, 'regeneratePin'])->name('profile.pin');
     Route::post('/profile/password', [ProfileController::class, 'changePassword'])->name('profile.password');
 
-    Route::get('/{page}', function ($page) {
-        return view('pages.dashboard', ['activeNav' => $page]);
-    })->where('page', 'none');
+    Route::get('/{page}', [PageController::class, 'dashboardFallback'])->where('page', 'none');
 });

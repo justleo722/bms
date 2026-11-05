@@ -1,4 +1,17 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Bar & Restaurant Management System (BMS)
+
+A multi-branch bar and restaurant management system built with Laravel 12,
+Blade, Tailwind CSS and Alpine.js. It covers POS, kitchen, inventory, expenses,
+rooms, staff, reports and settings.
+
+- **Local development:** copy `.env.example` to `.env`, run `composer install`,
+  `npm install`, `npm run dev` and `php artisan migrate`.
+- **Production deployment:** follow [DEPLOYMENT.md](DEPLOYMENT.md). The
+  production environment template is [.env.production.example](.env.production.example).
+
+---
+
+
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>

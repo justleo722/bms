@@ -4,6 +4,13 @@ require 'vendor/autoload.php';
 $app = require_once 'bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
+// This script deletes every user. Refuse to run anywhere except local
+// development so it can never be triggered against a production database.
+if (! $app->environment('local')) {
+    fwrite(STDERR, "Refusing to run: create_demo.php destroys all users and is for local development only.\n");
+    exit(1);
+}
+
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 

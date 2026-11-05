@@ -3,6 +3,13 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Never serve dotfiles (for example a misplaced .env) from the web root.
+    <IfModule mod_authz_core.c>
+        <FilesMatch "^\.">
+            Require all denied
+        </FilesMatch>
+    </IfModule>
+
     RewriteEngine On
 
     # Handle Authorization Header

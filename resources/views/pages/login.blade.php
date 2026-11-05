@@ -25,6 +25,12 @@
         <p class="text-sm text-slate-400 mt-1">Bar Management System</p>
     </div>
 
+    @if (session('status'))
+        <div class="mb-6 w-full max-w-[280px] rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-center text-sm text-amber-200">
+            {{ session('status') }}
+        </div>
+    @endif
+
     {{-- Code Display --}}
     <div class="mb-8">
         <div class="flex items-center justify-center gap-3">

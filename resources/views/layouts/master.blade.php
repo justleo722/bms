@@ -182,6 +182,11 @@
             });
             var data = null;
             try { data = await response.json(); } catch (e) { data = {}; }
+            if (response.status === 419) {
+                // The session expired while the page was open. Return to sign in.
+                window.location.href = @json(route('login'));
+                throw new Error('Your session expired. Please sign in again.');
+            }
             if (!response.ok) {
                 var error = new Error((data && data.message) || 'Something went wrong. Please try again.');
                 error.status = response.status;
