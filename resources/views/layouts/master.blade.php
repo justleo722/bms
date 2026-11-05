@@ -102,6 +102,10 @@
             pin: @json(route('profile.pin')),
             password: @json(route('profile.password')),
         };
+        // Keep URLs out of the x-data attribute below. A JSON-encoded URL
+        // contains double quotes, which would terminate the HTML attribute
+        // and stop Alpine from initialising the whole page.
+        window.BmsLoginUrl = @json(route('login'));
     </script>
 </head>
 <body class="h-full bg-gray-50 font-sans antialiased">
@@ -185,7 +189,7 @@
             try { data = await response.json(); } catch (e) { data = {}; }
             if (response.status === 419) {
                 // The session expired while the page was open. Return to sign in.
-                window.location.href = @json(route('login'));
+                window.location.href = window.BmsLoginUrl;
                 throw new Error('Your session expired. Please sign in again.');
             }
             if (!response.ok) {
@@ -606,7 +610,7 @@
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-semibold text-gray-900">Password</h4>
-                                    <p class="text-xs text-gray-500 mt-0.5">Update the password attached to this administrator account.</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Update the password attached to your account.</p>
                                 </div>
                             </div>
                             <div class="px-5 py-4 space-y-4">

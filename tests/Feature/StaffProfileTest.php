@@ -18,6 +18,29 @@ it('shows the signed-in staff member and profile menu for every role', function 
         ->assertSee('profile.isAdministrator', false);
 });
 
+it('renders a complete alpine component for the header and bottom navigation', function () {
+    $user = User::factory()->create(['role' => 'administrator']);
+
+    $response = $this->actingAs($user)->get('/');
+    $response->assertOk();
+
+    $dom = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $dom->loadHTML($response->getContent());
+    libxml_clear_errors();
+
+    $root = (new DOMXPath($dom))->query('//div[@x-data]')->item(0);
+
+    expect($root)->not->toBeNull();
+
+    $xData = $root->getAttribute('x-data');
+
+    expect($xData)
+        ->toContain('async apiJson')
+        ->toContain('activeNav')
+        ->toContain('window.BmsLoginUrl');
+});
+
 it('only lets administrators change the business profile from the profile form', function () {
     BarSettings::save(['name' => 'Original Bar']);
 
