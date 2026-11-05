@@ -37,7 +37,12 @@ class ProfileController extends Controller
         $user->name = $data['name'];
         $user->email = $data['email'];
         $user->phone = $data['phone'] ?? null;
-        $user->business_name = $data['business_name'] ?? null;
+
+        // Business name / receipt settings belong to the administrator. Staff
+        // can manage their own account details but must never rename the bar.
+        if ($user->isAdministrator()) {
+            $user->business_name = $data['business_name'] ?? null;
+        }
 
         if (! empty($data['password'])) {
             $user->password = $data['password'];
@@ -46,7 +51,7 @@ class ProfileController extends Controller
         $user->save();
 
         // Keep the bar profile and printed receipt in step with the admin profile.
-        if (filled($user->business_name)) {
+        if ($user->isAdministrator() && filled($user->business_name)) {
             BarSettings::save([
                 'name' => $user->business_name,
                 'phone' => $user->phone,

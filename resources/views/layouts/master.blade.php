@@ -24,6 +24,7 @@
         'initials' => $currentUser?->initials() ?: 'AD',
         'pin' => (string) ($currentUser?->pin ?? ''),
         'isAuthenticated' => (bool) $currentUser,
+        'isAdministrator' => (bool) ($currentUser?->isAdministrator() ?? false),
     ];
 @endphp
 <head>
@@ -222,12 +223,16 @@
             this.profileNotice = '';
             this.profileErrors = {};
             try {
-                var data = await this.apiJson(window.BmsProfileRoutes.update, 'PATCH', {
+                var payload = {
                     name: this.editProfile.name,
                     email: this.editProfile.email,
-                    phone: this.editProfile.phone,
-                    business_name: this.editProfile.businessName
-                });
+                    phone: this.editProfile.phone
+                };
+                if (this.profile.isAdministrator) {
+                    payload.business_name = this.editProfile.businessName;
+                }
+
+                var data = await this.apiJson(window.BmsProfileRoutes.update, 'PATCH', payload);
                 this.profile.name = data.user.name;
                 this.profile.email = data.user.email || '';
                 this.profile.phone = data.user.phone || '';
@@ -321,8 +326,7 @@
                         </button>
                     @endif
 
-                    @if ($currentUser?->isAdministrator())
-                    {{-- Administrator profile dropdown --}}
+                    {{-- Signed-in profile dropdown (available to every role) --}}
                     <div class="relative"
                          @keydown.escape.window="userMenuOpen = false">
                         <button @click="userMenuOpen = !userMenuOpen"
@@ -330,11 +334,11 @@
                                 :class="{ 'bg-gray-100': userMenuOpen }"
                                 :title="profile.name">
                             <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm shadow-blue-200">
-                                <span class="text-white text-sm font-semibold" x-text="profile.initials"></span>
+                                <span class="text-white text-sm font-semibold" x-text="profile.initials">{{ $currentUser?->initials() ?: 'A' }}</span>
                             </div>
                             <div class="hidden lg:block text-left max-w-[10rem]">
-                                <p class="text-sm font-medium text-gray-900 leading-tight truncate" x-text="profile.name"></p>
-                                <p class="text-[11px] text-gray-500 leading-tight truncate" x-text="profile.role"></p>
+                                <p class="text-sm font-medium text-gray-900 leading-tight truncate" x-text="profile.name">{{ $currentUser?->name }}</p>
+                                <p class="text-[11px] text-gray-500 leading-tight truncate" x-text="profile.role">{{ ucfirst($currentUser?->role ?? 'Administrator') }}</p>
                             </div>
                             @heroicon('o-chevron-down', 'hidden lg:block w-4 h-4 text-gray-400 transition-transform duration-200')
                         </button>
@@ -344,24 +348,23 @@
                              @click.away="userMenuOpen = false"
                              class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden origin-top-right">
                             <div class="px-4 py-3 border-b border-gray-100 lg:hidden">
-                                <p class="text-sm font-medium text-gray-900 truncate" x-text="profile.name"></p>
-                                <p class="text-xs text-gray-500 truncate" x-text="profile.email || profile.role"></p>
+                                <p class="text-sm font-medium text-gray-900 truncate" x-text="profile.name">{{ $currentUser?->name }}</p>
+                                <p class="text-xs text-gray-500 truncate" x-text="profile.email || profile.role">{{ $currentUser?->email ?: ucfirst($currentUser?->role ?? 'Administrator') }}</p>
                             </div>
                             <div class="py-1">
                                 <button @click="openProfile()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full text-left">
                                     @heroicon('o-user-circle', 'w-4 h-4 text-gray-400')
                                     Profile
                                 </button>
-                                <a href="/settings" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                    @heroicon('o-cog-6-tooth', 'w-4 h-4 text-gray-400')
-                                    Settings
-                                </a>
+                                @if ($currentUser?->isAdministrator())
+                                    <a href="/settings" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                        @heroicon('o-cog-6-tooth', 'w-4 h-4 text-gray-400')
+                                        Settings
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>
-                    @else
-                        <span class="max-w-[12rem] truncate px-2 text-sm font-medium text-gray-800" title="{{ $currentUser?->name }}">{{ $currentUser?->name }}</span>
-                    @endif
 
                     {{-- Sign out stays available to every signed-in user. --}}
                     <form method="POST" action="{{ route('logout') }}">
@@ -432,8 +435,7 @@
             </div>
         </nav>
 
-    @if ($currentUser?->isAdministrator())
-    {{-- Administrator Profile Modal --}}
+    {{-- Profile modal (available to every signed-in role) --}}
     <template x-teleport="body">
         <div x-show="showProfileModal"
              x-cloak
@@ -454,7 +456,7 @@
                 {{-- Header --}}
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900">Administrator Profile</h3>
+                        <h3 class="text-lg font-bold text-gray-900">My Profile</h3>
                         <p class="text-xs text-gray-500 mt-0.5">Manage your account details and sign-in security</p>
                     </div>
                     <button @click="showProfileModal = false" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
@@ -469,7 +471,7 @@
                             <span class="text-white text-2xl font-bold" x-text="editInitials()"></span>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <h4 class="text-lg font-bold text-gray-900 truncate" x-text="editProfile.name || 'Administrator'"></h4>
+                            <h4 class="text-lg font-bold text-gray-900 truncate" x-text="editProfile.name || 'Your account'"></h4>
                             <p class="text-sm text-gray-500" x-text="profile.role"></p>
                             <p class="text-xs text-gray-400 mt-0.5" x-show="profile.joinDate">
                                 Member since <span x-text="profile.joinDate"></span>
@@ -508,7 +510,7 @@
                             <p class="text-sm font-semibold text-amber-900">You are not signed in</p>
                             <p class="text-xs text-amber-700 mt-0.5">
                                 <a href="{{ route('login') }}" class="font-semibold underline underline-offset-2 hover:text-amber-900">Sign in</a>
-                                to view and update the administrator profile.
+                                to view and update your profile.
                             </p>
                         </div>
                     </div>
@@ -546,7 +548,7 @@
                                        :class="fieldError(profileErrors, 'phone') ? 'bg-red-50 border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'">
                                 <p x-show="fieldError(profileErrors, 'phone')" x-cloak class="mt-1 text-xs text-red-600" x-text="fieldError(profileErrors, 'phone')"></p>
                             </div>
-                            <div class="sm:col-span-2">
+                            <div class="sm:col-span-2" x-show="profile.isAdministrator">
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Business Name</label>
                                 <input type="text" x-model="editProfile.businessName" autocomplete="organization"
                                        class="w-full h-10 px-4 text-sm border rounded-xl outline-none transition-all focus:ring-2"
@@ -646,9 +648,13 @@
 
                 {{-- Footer --}}
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between gap-3 flex-shrink-0">
-                    <a href="{{ route('settings') }}" class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                        Business settings
-                    </a>
+                    @if ($currentUser?->isAdministrator())
+                        <a href="{{ route('settings') }}" class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                            Business settings
+                        </a>
+                    @else
+                        <span aria-hidden="true"></span>
+                    @endif
                     <div class="flex items-center gap-2">
                         <button @click="showProfileModal = false" class="py-2.5 px-4 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-white transition-colors">Close</button>
                         <button x-show="profileTab === 'account'"
@@ -663,7 +669,6 @@
             </div>
         </div>
     </template>
-    @endif
     </div>
 
     @stack('scripts')
