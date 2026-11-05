@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\StaffRole;
 use App\Settings\BarSettings;
 
 it('shows the signed-in staff member and profile menu for every role', function () {
@@ -16,6 +17,28 @@ it('shows the signed-in staff member and profile menu for every role', function 
         ->assertSee('Cashier Jane')
         ->assertSee('Sign out')
         ->assertSee('profile.isAdministrator', false);
+});
+
+it('shows staff only their name and position in the profile', function () {
+    StaffRole::query()->create(['name' => 'Attendant', 'slug' => 'attendant']);
+    $staff = User::factory()->create([
+        'name' => 'Taylor Attendant',
+        'role' => 'attendant',
+        'email' => 'taylor@example.com',
+        'permissions' => [],
+    ]);
+
+    $this->actingAs($staff)
+        ->get('/no-access')
+        ->assertOk()
+        ->assertSee('Taylor Attendant')
+        ->assertSee('Attendant')
+        ->assertDontSee('taylor@example.com')
+        ->assertDontSee('Email Address')
+        ->assertDontSee('Security')
+        ->assertDontSee('Sign-in code')
+        ->assertDontSee('Member since')
+        ->assertDontSee('Save changes');
 });
 
 it('renders a complete alpine component for the header and bottom navigation', function () {

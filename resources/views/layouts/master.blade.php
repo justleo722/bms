@@ -13,18 +13,24 @@
     $barLogo = \App\Settings\BarSettings::logoUrl();
 
     $currentUser = auth()->user();
+    $currentRole = $currentUser?->role ?? 'administrator';
+    $isAdministrator = (bool) ($currentUser?->isAdministrator() ?? false);
+    $position = $currentUser?->isAdministrator()
+        ? 'Administrator'
+        : (\App\Models\StaffRole::withTrashed()->where('slug', $currentRole)->value('name')
+            ?? ucfirst(str_replace(['-', '_'], ' ', $currentRole)));
 
     $adminProfile = [
         'name' => $currentUser?->name ?: 'Administrator',
-        'email' => (string) ($currentUser?->email ?? ''),
-        'phone' => (string) ($currentUser?->phone ?? $barSettings['phone']),
-        'businessName' => (string) ($currentUser?->business_name ?? $barName),
-        'role' => $currentUser ? ucfirst($currentUser->role ?? 'administrator') : 'Administrator',
-        'joinDate' => $currentUser?->created_at ? $currentUser->created_at->format('M j, Y') : '',
+        'email' => $isAdministrator ? (string) ($currentUser?->email ?? '') : '',
+        'phone' => $isAdministrator ? (string) ($currentUser?->phone ?? $barSettings['phone']) : '',
+        'businessName' => $isAdministrator ? (string) ($currentUser?->business_name ?? $barName) : '',
+        'role' => $position,
+        'joinDate' => $isAdministrator && $currentUser?->created_at ? $currentUser->created_at->format('M j, Y') : '',
         'initials' => $currentUser?->initials() ?: 'AD',
-        'pin' => (string) ($currentUser?->pin ?? ''),
+        'pin' => $isAdministrator ? (string) ($currentUser?->pin ?? '') : '',
         'isAuthenticated' => (bool) $currentUser,
-        'isAdministrator' => (bool) ($currentUser?->isAdministrator() ?? false),
+        'isAdministrator' => $isAdministrator,
     ];
 @endphp
 <head>
@@ -95,7 +101,7 @@
             },
         };
 
-        // Administrator profile shown in the header and profile modal.
+        // Signed-in identity shown in the header and profile modal.
         window.BmsAdminProfile = @json($adminProfile);
         window.BmsProfileRoutes = {
             update: @json(route('profile.update')),
@@ -353,7 +359,7 @@
                              class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden origin-top-right">
                             <div class="px-4 py-3 border-b border-gray-100 lg:hidden">
                                 <p class="text-sm font-medium text-gray-900 truncate" x-text="profile.name">{{ $currentUser?->name }}</p>
-                                <p class="text-xs text-gray-500 truncate" x-text="profile.email || profile.role">{{ $currentUser?->email ?: ucfirst($currentUser?->role ?? 'Administrator') }}</p>
+                                <p class="text-xs text-gray-500 truncate" x-text="profile.isAdministrator ? profile.email : profile.role">{{ $currentUser?->isAdministrator() ? ($currentUser?->email ?: $position) : $position }}</p>
                             </div>
                             <div class="py-1">
                                 <button @click="openProfile()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full text-left">
@@ -461,13 +467,18 @@
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
                     <div>
                         <h3 class="text-lg font-bold text-gray-900">My Profile</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Manage your account details and sign-in security</p>
+                        @if ($currentUser?->isAdministrator())
+                            <p class="text-xs text-gray-500 mt-0.5">Manage your account details and sign-in security</p>
+                        @else
+                            <p class="text-xs text-gray-500 mt-0.5">Your name and position</p>
+                        @endif
                     </div>
                     <button @click="showProfileModal = false" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
                         @heroicon('o-x-mark', 'w-5 h-5')
                     </button>
                 </div>
 
+                @if ($currentUser?->isAdministrator())
                 {{-- Identity summary --}}
                 <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex-shrink-0">
                     <div class="flex items-center gap-4">
@@ -652,13 +663,9 @@
 
                 {{-- Footer --}}
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between gap-3 flex-shrink-0">
-                    @if ($currentUser?->isAdministrator())
-                        <a href="{{ route('settings') }}" class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                            Business settings
-                        </a>
-                    @else
-                        <span aria-hidden="true"></span>
-                    @endif
+                    <a href="{{ route('settings') }}" class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                        Business settings
+                    </a>
                     <div class="flex items-center gap-2">
                         <button @click="showProfileModal = false" class="py-2.5 px-4 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-white transition-colors">Close</button>
                         <button x-show="profileTab === 'account'"
@@ -670,6 +677,18 @@
                         </button>
                     </div>
                 </div>
+                @else
+                    <div class="px-6 py-10 text-center">
+                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                            {{ $currentUser?->initials() }}
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-900">{{ $currentUser?->name }}</h4>
+                        <p class="mt-1 text-sm text-gray-500">{{ $position }}</p>
+                    </div>
+                    <div class="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-4">
+                        <button @click="showProfileModal = false" class="py-2.5 px-4 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-white transition-colors">Close</button>
+                    </div>
+                @endif
             </div>
         </div>
     </template>
